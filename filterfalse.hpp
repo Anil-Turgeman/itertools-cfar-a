@@ -1,33 +1,73 @@
 #include <iostream>
+#include <vector>
+#include <typeinfo>
+#include <iterator>
+
 using namespace std;
-namespace itertools {
-    template<typename T> class filterfalse {
-        
-        private:
 
-            class iter {
-                private:
-                    int at;
-                public:
-                    iter(int at) : at(at){}
-                    bool operator!=(iter const& other) const { return at != other.at; }
-                    int const& operator*() const { return at; }
-                    iter& operator++() {++at; return *this; }
-            };
+namespace itertools{
 
-        const T& m_container;
-        public:
-            filterfalse(const T& container): m_container(container){}
-            template<typename K>
-            filterfalse(const T& container, K func): m_container(container) {};
+	template <typename Function,typename Container>
+	class filterfalse{
+		
+		private:
+            const Function& func;
+			const Container& container;
+			
+		public:
+			filterfalse(const Function& func,const Container& cont ):container(cont),func(func){}
 
-            iter begin() {
-                return iter(0);
-                }
+		class iterator {
+			
+			private:
+				decltype(container.begin()) pos;
+				decltype(container.end()) end;
+				Function func;
 
-            iter end() {
-                return iter(2); 
-                }
+			public:
+				iterator(decltype(container.begin()) p,decltype(container.end()) end,Function func): 
+					pos(p),end(end),func(func) {
+						while(func(*pos) && pos!=end){
+                        	pos++;
+                    	}
+					}
 
-    };
-};
+				iterator& operator++() {
+					do{
+						++pos;
+                    }while(func(*pos) && pos!=end);                       
+
+					return *this;
+				}
+
+				iterator operator++(int) {
+					iterator tmp= *this;
+					pos++;
+                    while(func(*pos) && pos!=end){
+                        pos++;
+                    }
+					return tmp;
+				}
+
+                auto operator*() {
+                    return *pos;
+				}
+
+				bool operator==(const iterator& rhs) const {
+					return pos == rhs.pos;
+				}
+
+				bool operator!=(const iterator& rhs) const {
+					return pos != rhs.pos;
+				}
+			};
+
+			iterator begin()const{
+				return iterator(container.begin(),container.end(),func);
+			}
+
+			iterator end() const{
+				return iterator(container.end(),container.end(),func);
+			}
+	};
+}
