@@ -1,37 +1,85 @@
 #include <iostream>
+#include <vector>
+#include <typeinfo>
+#include <type_traits>
+#include <iterator>
+
 using namespace std;
 
-namespace itertools {
-    template<typename T> class accumulate {
-        
-        private:
 
-            class iter {
+namespace itertools{
 
-                private:
-                    int at;
+	typedef struct {
+		template<typename T>
+		T operator ()(T a,T b)const{
+			return a+b;
+		}
+	}plus;
 
-                public:
-                    iter(int at) : at(at) {}
-                    bool operator!=(iter const& other) const { return at != other.at; }
-                    int const& operator*() const { return at; }
-                    iter& operator++() { ++at; return *this; }
-            };
+	template <typename Container,typename Function = plus>
+	class accumulate{
+		
+		private:
+		    const Container& container;
+			const Function& func;
 
-        const T& m_container;
+		public:
+			accumulate(const Container& cont, const Function& func = plus()):container(cont),func(func){}
 
-        public:
-            accumulate(const T& container): m_container(container){}
-            template<typename K>
-            accumulate(K func,const T& container): m_container(container) {};
+		class iterator {
 
-            iter begin() {
-                return iter(0);
-                }
+			private:
+				typename decay<decltype(*(container.begin()))>::type sum;
 
-            iter end() {
-                return iter(2); 
-                }
+				decltype(container.begin()) pos;
+				decltype(container.end()) end;
+				Function func;
 
-    };
-};
+			public:
+
+				iterator(decltype(container.begin()) p,decltype(container.end()) end,Function func): 
+					pos(p),end(end),func(func) {
+						if(p!=end){
+							sum=*p;
+						}
+					}
+
+
+				auto operator*() const{
+					return sum;
+				}
+
+				iterator& operator++() {
+					++pos;
+					if(pos!=end){
+						sum=func(sum,*(pos));
+					}
+					return *this;
+				}
+
+				iterator operator++(int) {
+					iterator tmp= *this;
+					pos++;
+					sum=func(sum,*(pos));
+					return tmp;
+				}
+
+				bool operator==(const iterator& rhs)  const{
+					return pos == rhs.pos;
+				}
+
+				bool operator!=(const iterator& rhs) const {
+					return pos != rhs.pos;
+				}
+			};
+
+			iterator begin() const{
+				return iterator(container.begin(),container.end(),func);
+				
+			}
+
+			iterator end() const{
+				return iterator(container.end(),container.end(),func);
+			}
+	};
+}
