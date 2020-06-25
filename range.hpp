@@ -1,31 +1,58 @@
 #include <iostream>
+#include <stdexcept>
+
 using namespace std;
 
-namespace itertools {
-    template<typename T> class range {
-        private:
+namespace itertools{
+	class range {
+		public:
+			int Start;
+			int End;
 
-            class iter {
-                private:
-                    T at;
-                public:
-                    iter(T at) : at(at) {}
-                    bool operator!=(iter const& other) const { return at != other.at; }
-                    T const& operator*() const { return at; }
-                    iter& operator++() { ++at; return *this; }
-            };
+			range(int s,int e):Start(s),End(e){
+				if(s>e){
+					throw new std::logic_error("there is no range\n");
+				}
+			}
 
-            T begin_val;
-            T end_val;
+	class iterator {
 
-        public:
+		private:
+			int curr;
 
-            range(T begin_val, T end_val) :
-            begin_val(begin_val), end_val(end_val) { }
-            const iter begin() const{ return iter(begin_val); }
-            const iter end()  const { return iter(end_val); }
-            iter begin() { return iter(begin_val); }
-            iter end() { return iter(end_val); }
-            
-    };
-};
+		public:
+			iterator(int num): curr(num){}
+
+			int operator*() const {
+				return curr;
+			}
+
+			iterator& operator++() {
+				(curr)++;
+				return *this;
+			}
+
+			const iterator operator++(int) {
+				iterator tmp= *this;
+				curr++;
+				return tmp;
+			}
+
+			bool operator==(const iterator& rhs) const {
+				return curr == rhs.curr;
+			}
+
+			bool operator!=(const iterator& rhs) const {
+				return curr!= rhs.curr;
+			}
+		};
+
+		iterator begin() const{
+			return iterator{Start};
+		}
+		
+		iterator end() const{
+			return iterator{End};
+		}
+	};
+}
